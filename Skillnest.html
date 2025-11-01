@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>React + TypeScript (No Setup)</title>
+    <!-- React, ReactDOM, and Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 1rem;
+        background: #f9f9f9;
+      }
+      button {
+        background: #007bff;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Your TSX React code -->
+    <script type="text/babel" data-presets="typescript,react">
+      type View =
+        | "landing"
+        | "login"
+        | "register"
+        | "admin-login"
+        | "admin-dashboard"
+        | "dashboard";
+
+      interface User {
+        username: string;
+        email: string;
+        github?: string;
+        loginTime: string;
+        totalLikes?: number;
+      }
+
+      interface Community {
+        id: number;
+        name: string;
+        description: string;
+        members: number;
+        color: string;
+      }
+
+      interface Message {
+        id: number;
+        username: string;
+        text: string;
+        timestamp: string;
+        likes: number;
+        likedBy: string[];
+      }
+
+      const SkillNest: React.FC = () => {
+        const [currentView, setCurrentView] = React.useState<View>("landing");
+        const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+        const [communities, setCommunities] = React.useState<Community[]>([]);
+        const [messages, setMessages] = React.useState<Record<number, Message[]>>({});
+        const [selectedCommunity, setSelectedCommunity] = React.useState<Community | null>(
+          null
+        );
+
+        React.useEffect(() => {
+          setCommunities([
+            { id: 1, name: "Web Dev", description: "HTML, CSS, JS", members: 120, color: "#4f46e5" },
+            { id: 2, name: "AI/ML", description: "Machine learning discussions", members: 80, color: "#059669" },
+            { id: 3, name: "Cloud", description: "AWS, Azure, GCP", members: 65, color: "#2563eb" },
+          ]);
+        }, []);
+
+        const handleLogin = () => {
+          const user: User = {
+            username: "yash",
+            email: "yash@example.com",
+            loginTime: new Date().toLocaleTimeString(),
+          };
+          setCurrentUser(user);
+          setCurrentView("dashboard");
+        };
+
+        const handleLogout = () => {
+          setCurrentUser(null);
+          setSelectedCommunity(null);
+          setCurrentView("landing");
+        };
+
+        const addMessage = (communityId: number, text: string) => {
+          if (!currentUser) return;
+          setMessages((prev) => ({
+            ...prev,
+            [communityId]: [
+              ...(prev[communityId] || []),
+              {
+                id: Date.now(),
+                username: currentUser.username,
+                text,
+                timestamp: new Date().toLocaleTimeString(),
+                likes: 0,
+                likedBy: [],
+              },
+            ],
+          }));
+        };
+
+        return (
+          <div>
+            {currentView === "landing" && (
+              <div>
+                <h1>Welcome to SkillNest 🪶</h1>
+                <button onClick={() => setCurrentView("login")}>Login</button>
+              </div>
+            )}
+
+            {currentView === "login" && (
+              <div>
+                <h2>Login Page</h2>
+                <button onClick={handleLogin}>Login as Guest</button>
+              </div>
+            )}
+
+            {currentView === "dashboard" && currentUser && (
+              <div>
+                <h2>Welcome, {currentUser.username}!</h2>
+                <button onClick={handleLogout}>Logout</button>
+
+                <h3>Communities</h3>
+                <div style={{ display: "flex", gap: "1rem" }}>
+                  {communities.map((c) => (
+                    <div
+                      key={c.id}
+                      style={{
+                        background: c.color,
+                        color: "white",
+                        padding: "1rem",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setSelectedCommunity(c)}
+                    >
+                      <strong>{c.name}</strong>
+                      <p>{c.members} members</p>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedCommunity && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <h3>{selectedCommunity.name} Chat</h3>
+                    {(messages[selectedCommunity.id] || []).map((msg) => (
+                      <p key={msg.id}>
+                        <strong>{msg.username}:</strong> {msg.text}{" "}
+                        <span style={{ fontSize: "0.8em", color: "#888" }}>
+                          ({msg.timestamp})
+                        </span>
+                      </p>
+                    ))}
+                    <input
+                      id="msg"
+                      placeholder="Type a message"
+                      style={{ padding: "0.5rem", width: "60%" }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const target = e.target as HTMLInputElement;
+                          if (target.value.trim()) {
+                            addMessage(selectedCommunity.id, target.value);
+                            target.value = "";
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<SkillNest />);
+    </script>
+  </body>
+</html>
